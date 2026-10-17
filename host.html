@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host Dashboard</title>
+    <!-- Add PeerJS -->
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 20px; background: #111; color: #fff; }
+        #status-box { padding: 15px; background: #222; border-radius: 8px; border-left: 4px solid #0070f3; margin-top: 20px; }
+        .log-line { margin: 5px 0; font-family: monospace; font-size: 14px; color: #aaa; }
+        #room-box { display: none; margin-top: 20px; padding: 15px; background: #004400; border-radius: 8px; border: 2px dashed #10b981; }
+        .room-code { font-size: 24px; font-weight: bold; color: #10b981; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+    <h1>Host Command Center</h1>
+    <p>Model: <span id="model-name">Loading...</span></p>
+    
+    <div id="status-box">
+        <h3>System Status</h3>
+        <p id="progress-text" style="font-weight: bold;">Checking system...</p>
+        <div id="debug-logs"></div>
+    </div>
+
+    <!-- Shows up once the engine is loaded -->
+    <div id="room-box">
+        <h3>Network Ready</h3>
+        <p>Tell clients to connect using Room Code:</p>
+        <div class="room-code" id="room-code-display">WAITING...</div>
+        <p id="connected-count">Connected Users: 0</p>
+    </div>
+
+    <script type="module" src="./js/host/app.js"></script>
+</body>
+</html>
