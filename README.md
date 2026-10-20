@@ -36,7 +36,7 @@ To allow your browser to utilize the full power of your dedicated GPU, the **Hos
 ## 📸 Step-by-Step Usage Guide
 
 ### 1. Initial Interface & Setup
-#### Go the vercel app link [![LINK]]
+#### Go the vercel app link [![LINK]https://llmpersonalserver.vercel.app/]
 When you first open the app, you decide whether to become a Host or join as a Client. The Host selects their VRAM size, the SLM model (Chat or Document/OCR), and the number of users to partition the GPU for.
 ![Initial Interface](images/1_initial_interface.png)
 
