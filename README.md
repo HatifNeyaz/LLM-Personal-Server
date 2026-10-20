@@ -68,7 +68,7 @@ Because this architecture is 100% Vanilla JavaScript, HTML, and CSS using ES Mod
 ### 1. Clone the Repository
 ```bash
 git clone [https://github.com/HatifNeyaz/LLM-Personal-Server.git]
-cd LLM-Personal-Server.git
+cd LLM-Personal-Server
 ```
 
 ### 2. Run Locally (Testing)
