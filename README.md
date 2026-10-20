@@ -1,8 +1,5 @@
 # Edge AI Workspace: P2P Browser-Based LLM Server
 
-[![YouTube Tutorial](https://img.shields.io/badge/YouTube-Watch_Video_Tutorial-FF0000?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID_HERE) 
-*(Click above to watch the full step-by-step video tutorial on setting up and using the workspace!)*
-
 Edge AI Workspace is a serverless, purely browser-based distributed AI platform. It turns a single local GPU into a powerful multi-tenant inference server. By utilizing **WebGPU** and **WebRTC (PeerJS)**, multiple lightweight clients (like smartphones or low-end laptops) can connect to a Host machine over the internet/Wi-Fi and independently run complex AI tasks, OCR, and PDF summarization—with **zero backend infrastructure**.
 
 ## ✨ Universal Hardware Support (Any GPU, Any Size)
