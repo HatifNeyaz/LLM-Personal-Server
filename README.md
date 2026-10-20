@@ -67,8 +67,8 @@ Because this architecture is 100% Vanilla JavaScript, HTML, and CSS using ES Mod
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/YOUR_USERNAME/edge-ai-workspace.git](https://github.com/YOUR_USERNAME/edge-ai-workspace.git)
-cd edge-ai-workspace
+git clone [https://github.com/HatifNeyaz/LLM-Personal-Server.git]
+cd LLM-Personal-Server.git
 ```
 
 ### 2. Run Locally (Testing)
