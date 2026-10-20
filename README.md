@@ -1,54 +1,114 @@
 # Edge AI Workspace: P2P Browser-Based LLM Server
 
-A serverless, purely browser-based distributed AI workspace that turns a single local GPU into a multi-tenant inference server. Built with Vanilla JavaScript, WebGPU, and WebRTC, this architecture allows multiple lightweight clients (phones, laptops) to connect to a host machine over Wi-Fi and execute complex SLM inference, PDF summarization, and peer-to-peer sharing with **zero backend infrastructure**.
+[![YouTube Tutorial](https://img.shields.io/badge/YouTube-Watch_Video_Tutorial-FF0000?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID_HERE) 
+*(Click above to watch the full step-by-step video tutorial on setting up and using the workspace!)*
 
-## ✨ The Goodness: Universal GPU Support
-This system is designed to run out-of-the-box on **any GPU**—from a weak 4GB integrated laptop chip to a 24GB enthusiast card. There are no CUDA drivers to configure, no Docker containers to build, and no Python environments to break. The Host dynamically allocates WebGPU memory bounds based on user selection, seamlessly scaling the context cache and parallel engine counts to perfectly fit the physical hardware limits without requiring further tweaks.
+Edge AI Workspace is a serverless, purely browser-based distributed AI platform. It turns a single local GPU into a powerful multi-tenant inference server. By utilizing **WebGPU** and **WebRTC (PeerJS)**, multiple lightweight clients (like smartphones or low-end laptops) can connect to a Host machine over the internet/Wi-Fi and independently run complex AI tasks, OCR, and PDF summarization—with **zero backend infrastructure**.
 
-## 🚀 Key Features
+## ✨ Universal Hardware Support (Any GPU, Any Size)
+This project is built to run entirely in the browser using WebGPU, meaning **it works on any GPU irrespective of the manufacturer** (NVIDIA, AMD, Apple Silicon, or Intel). 
+* **Low-End Friendly:** Features strict memory pruning and a 4GB VRAM configuration mode so it won't crash older laptops.
+* **High-End Scaling:** Enthusiasts with 12GB+ or 24GB+ VRAM can scale up the context windows and host up to 5 concurrent users seamlessly.
 
-*   **True Zero-Latency Parallelism:** Spawns multiple isolated Web Workers (one `MLCEngine` per client slot), allowing simultaneous, parallel token generation for all connected users without sequential queueing.
-*   **Smart Cache Compression (50% Threshold):** Implements dynamic KV cache pruning. Instead of crashing on massive PDFs or deleting entire chat histories, the engine tracks memory thresholds and smartly truncates the oldest context while preserving Attention Sinks (System Prompts).
-*   **Client-Side PDF Parsing:** Clients extract text from `.pdf` and `.txt` files locally using `pdf.js` before transmitting the raw text to the host via WebRTC, saving massive amounts of host GPU computation and network bandwidth.
-*   **Native PDF Export:** Clients can instantly generate and download formatted PDF reports of the AI's insights using `jsPDF`.
-*   **P2P Star Topology Network:** Integrated PeerJS routing allows clients to chat privately, broadcast messages, and natively share Base64 file attachments across the local network independently of the AI.
+## 🧠 True Zero-Latency Parallelism
+Unlike traditional queued servers, this workspace achieves true parallelism by **hosting different copies of the same LLM directly in the GPU**. The Host spawns multiple, isolated Web Workers. If 3 users are connected, 3 independent AI engines are running simultaneously. There is zero sequential waiting—each device works completely independently of the others.
 
-## ⚠️ Critical Host Prerequisites
+## 💾 Smart Cache Distribution & Memory Pruning
+Memory (VRAM) is the biggest bottleneck in local AI. This system solves it dynamically:
+1. **Pre-Boot Math:** The host selects their total VRAM. The system calculates the base weights of the SLM multiplied by the number of users. 
+2. **Custom Allotment:** The leftover VRAM is divided and allocated as KV Cache Context limits for each user. The Host can give everyone an equal share, or use sliders to give one user a massive context window (for reading large PDFs) and restrict others.
+3. **The 50% Threshold Pruning:** When a user's context fills up to 50% of their allotted memory, the system automatically compresses their cache. It preserves the System Prompt (Attention Sinks) and truncates the oldest messages, ensuring the GPU **never** crashes from Out-Of-Memory (OOM) errors.
 
-To allow the browser to interface directly with the Host machine's dedicated hardware, the Host browser must be explicitly configured to allow high-performance WebGPU bindings. 
+---
 
-Before acting as a Host, open your browser (Chrome or Edge) and navigate to `chrome://flags` (or `edge://flags`). Enable the following settings:
-1.  **WebGPU Developer Features:** `Enabled`
-2.  **WebXR/WebGPU Binding:** `Enabled`
-3.  **Choose ANGLE graphics backend:** Select `D3D11` or `Vulkan` (Forces the browser to utilize the High-Performance Dedicated GPU rather than integrated graphics).
+## 🛠️ Prerequisites: Host Browser Setup
 
-*Note: Connecting Clients do not need a GPU and do not need to alter any browser flags.*
+To allow your browser to utilize the full power of your dedicated GPU, the **Host** must configure a few browser flags. *(Note: Connecting clients do not need to do this, only the Host).*
+*(Note: All the devices must be connected to the same WIFI or hostpot, once everyone is connected and the client interface is active for prompting then you can switch off the INTERNET but still hostpot or WIFI(even with NO Internet) connectivity is required for devices to talk to each other via wirelessly.)*
 
-## 🛠️ Architecture & Tech Stack
+1. Open Google Chrome, Microsoft Edge, or Brave.
+2. Type `chrome://flags` (or `edge://flags`) in the URL bar.
+3. Search for and **Enable** the following:
+   * **WebGPU Developer Features**
+   * **WebXR/WebGPU Binding**
+   * **Choose ANGLE graphics backend:** Set to `D3D11` (Windows) or `Vulkan` / `Metal` (depending on your OS) to force the browser to use the High-Performance Dedicated GPU rather than the integrated CPU graphics.
+4. Relaunch the browser.
 
-*   **Compute Engine:** [WebLLM](https://webllm.mlc.ai/) (Llama-3.2-1B-Instruct & Phi-3.5-mini-instruct)
-*   **Networking:** [PeerJS](https://peerjs.com/) (WebRTC Data Channels)
-*   **Document Processing:** `pdf.js` (Extraction) & `jspdf` (Generation)
-*   **Framework:** 100% Vanilla JavaScript (ES Modules, Web Workers) — No Webpack, No Vite, No Node.js.
+---
 
-## 📦 Installation & Usage
+## 📸 Step-by-Step Usage Guide
 
-Because this project relies entirely on browser-native ES Modules and CDN imports, there is **no build step**.
+### 1. Initial Interface & Setup
+#### Go the vercel app link [![LINK]]
+When you first open the app, you decide whether to become a Host or join as a Client. The Host selects their VRAM size, the SLM model (Chat or Document/OCR), and the number of users to partition the GPU for.
+![Initial Interface](images/1_initial_interface.png)
 
-1.  **Host the Files:** Deploy the directory to Vercel, GitHub Pages, or serve it locally using VS Code Live Server.
-2.  **Initialize the Host:**
-    *   Navigate to `index.html` on the machine with the GPU.
-    *   Select your total VRAM, desired Model (Chat or Document), and number of parallel users.
-    *   Click **Boot**.
-3.  **Assign Clients:**
-    *   Clients navigate to `client.html` on their own devices and enter the 4-digit Room Code displayed on the Host.
-    *   The Host selects connected clients from the Lobby dropdowns to assign them dedicated WebGPU memory slots.
-    *   The Host clicks **Boot Assigned Engines**.
-4.  **Collaborate:** Clients can now prompt the AI, attach PDFs, and share insights across the local mesh network.
+### 2. The Host Lobby
+Once the Host configures the memory, the system generates a unique **4-Digit Room Code**.
+![Host Lobby](images/2_host_lobby.png)
 
-## 🧠 Memory Management (The 50% Threshold)
+### 3. Client Connection
+Clients open the web app on their phones or laptops, enter their name, and type in the 4-Digit Room Code to connect directly to the Host via P2P WebRTC.
+![Client Login](images/3_client_login.png)
 
-To prevent the dreaded `GPUDeviceLost` Out-Of-Memory (OOM) crash, the system enforces a strict token budget:
-*   The Pre-Boot UI calculates base model weights ($~800$MB for Llama, $~2.2$GB for Phi-3.5) multiplied by the active parallel user count.
-*   Remaining VRAM is mathematically divided into safe Token Budgets (1 Token $\approx$ 96 KB).
-*   During inference, the Network Router tracks payload sizes. If a user's context exceeds 50% of their allotted budget, the system triggers a **Buffering** state on the client, slices out the oldest conversational middle-state, and retains the most recent prompts and core system instructions, guaranteeing the WebLLM engine never exceeds physical hardware constraints.
+### 4. Host Activation & Room Lock
+Once all clients appear in the lobby, the Host assigns each client to an available Engine Slot. The Host clicks "Boot Assigned Engines". The room is now **Locked** (no more users can join), and the independent LLM instances are loaded into the VRAM.
+![Host Activation](images/4_host_activation.png)
+
+### 5. Independent Client Workspace
+Clients are transitioned to the main chat interface. Here, they can privately message the AI, attach and summarize PDFs/Text files, or use the dropdown to send standard chat messages to other peers in the room!
+![Client Chat](images/5_client_chat.png)
+![Client Chat](images/6_client_chat.png)
+> **⚠️ IMPORTANT NOTE ON SPEED:** 
+> The **very first prompt** you send to the AI will take some time to process (often 10-30 seconds). This is because the GPU is compiling the WebGPU shaders and calculating the initial prefill. **Once the first prompt is done, the process gets incredibly fast**, streaming tokens almost instantly for all subsequent queries.
+
+---
+
+## 🚀 How to Deploy & Use on Any System
+
+Because this architecture is 100% Vanilla JavaScript, HTML, and CSS using ES Modules, there are no complex build steps (No Node.js, No Webpack, No Docker).
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/YOUR_USERNAME/edge-ai-workspace.git](https://github.com/YOUR_USERNAME/edge-ai-workspace.git)
+cd edge-ai-workspace
+```
+
+### 2. Run Locally (Testing)
+You can test it immediately on your own PC using VS Code:
+
+Install the Live Server extension in VS Code.
+
+Right-click index.html and click "Open with Live Server".
+
+### 3. Deploy to Vercel (Global Access)
+To let anyone in the world connect to your GPU, host the UI on Vercel:
+
+#### Method A: Vercel CLI
+
+```Bash
+npm i -g vercel
+vercel
+```
+Follow the prompts (leave Build Command blank, set Root Directory to ./).
+
+#### Method B: GitHub Integration (Recommended)
+
+Push this repository to your own GitHub account.
+
+Go to Vercel.com and click Add New -> Project.
+
+Import your GitHub repository.
+
+Leave the Framework Preset as "Other".
+
+Click Deploy.
+
+CRITICAL: The repository includes a vercel.json file. This file is mandatory, as it injects Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers. Without these, browsers will block the SharedArrayBuffer memory allocation required by WebGPU Web Workers.
+
+📜 Tech Stack
+Compute: WebLLM (Running Llama 3.2 & Phi-3.5)
+
+Networking: PeerJS (WebRTC Data Channels)
+
+Document Handling: pdf.js & jspdf
