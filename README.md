@@ -45,7 +45,7 @@ Once the Host configures the memory, the system generates a unique **4-Digit Roo
 ![Host Lobby](images/2_host_lobby.png)
 
 ### 3. Client Connection
-Clients open the web app on their phones or laptops, enter their name, and type in the 4-Digit Room Code to connect directly to the Host via P2P WebRTC.
+Clients open the web app on their phones or laptops, enter their name, and type in the 4-Digit Room Code to connect directly to the Host via P2P WebRTC. Since we had 2 users so the second client will enter his name and then the 4-Digit Room Code.
 ![Client Login](images/3_client_login.png)
 
 ### 4. Host Activation & Room Lock
