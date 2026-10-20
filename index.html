@@ -3,17 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edge LLM Server</title>
+    <title>Edge LLM Server Setup</title>
     <style>
-        body { font-family: system-ui, sans-serif; text-align: center; padding-top: 50px; background: #f4f4f5; }
-        .btn { display: inline-block; padding: 15px 30px; margin: 10px; font-size: 18px; color: white; background: #0070f3; text-decoration: none; border-radius: 8px; }
-        .btn-client { background: #10b981; }
+        body { font-family: system-ui, sans-serif; background: #f4f4f5; padding: 20px; }
+        .box { background: white; padding: 30px; border-radius: 12px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        select, input[type="range"] { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; }
+        .math-box { background: #111; color: #10b981; padding: 15px; border-radius: 8px; font-family: monospace; margin: 15px 0; }
+        .btn { display: block; padding: 15px; font-size: 16px; color: white; background: #0070f3; text-decoration: none; border-radius: 8px; text-align: center; cursor: pointer; border: none; width: 100%; font-weight: bold;}
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .slot-slider { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
-    <h1>Edge LLM Network</h1>
-    <p>Choose your device role:</p>
-    <a href="host.html" class="btn">Initialize as Host (GPU Required)</a>
-    <a href="client.html" class="btn btn-client">Connect to Host (No GPU Needed)</a>
+    <div class="box">
+        <h2>Host Pre-Boot Setup (Parallel Multi-Engine)</h2>
+        
+        <label>Total GPU VRAM</label>
+        <select id="vram-select">
+            <option value="4096">4 GB</option>
+            <option value="6144" selected>6 GB (GTX 1660 Ti)</option>
+            <option value="8192">8 GB</option>
+            <option value="12288">12 GB</option>
+        </select>
+
+        <label>Model (Instances)</label>
+        <select id="model-select">
+            <option value="chat" data-weight="800">Fast Chat SLM (Llama 1B) - 800MB/Instance</option>
+            <option value="doc" data-weight="2200">Document SLM (Phi-3.5) - 2.2GB/Instance</option>
+        </select>
+
+        <label>Max Parallel Users (1 Engine per User)</label>
+        <select id="user-select">
+            <option value="1">1 User</option>
+            <option value="2" selected>2 Users</option>
+            <option value="3">3 Users</option>
+            <option value="4">4 Users</option>
+            <option value="5">5 Users</option>
+        </select>
+
+        <div class="math-box">
+            <div id="calc-weights">Weights VRAM: Calculating...</div>
+            <div id="calc-leftover">Leftover Context VRAM: Calculating...</div>
+        </div>
+
+        <div id="slots-container"></div>
+        <button id="launch-btn" class="btn" onclick="launch()">Lock Configuration & Boot</button>
+    </div>
+    
+    <div class="box" style="margin-top: 20px;">
+        <a href="client.html" class="btn" style="background:#10b981;">Connect as Client</a>
+    </div>
+
+    <script>
+        const vramSel = document.getElementById('vram-select');
+        const modelSel = document.getElementById('model-select');
+        const userSel = document.getElementById('user-select');
+        const slotsContainer = document.getElementById('slots-container');
+        const launchBtn = document.getElementById('launch-btn');
+        let slotBudgets = [];
+
+        function updateMath() {
+            const totalVram = parseInt(vramSel.value);
+            const modelWeight = parseInt(modelSel.options[modelSel.selectedIndex].dataset.weight);
+            const users = parseInt(userSel.value);
+            
+            const totalWeights = modelWeight * users;
+            const leftover = totalVram - totalWeights;
+            
+            document.getElementById('calc-weights').innerText = `Base Weights (${users}x): ${totalWeights} MB`;
+            document.getElementById('calc-leftover').innerText = `Leftover for Cache: ${leftover} MB`;
+            
+            if (leftover < 500) {
+                document.getElementById('calc-leftover').style.color = "#ef4444";
+                launchBtn.disabled = true;
+                launchBtn.innerText = "Insufficient VRAM - Lower Users or Upgrade GPU";
+                slotsContainer.innerHTML = "";
+                return;
+            } 
+            
+            document.getElementById('calc-leftover').style.color = "#10b981";
+            launchBtn.disabled = false;
+            launchBtn.innerText = "Lock Configuration & Boot Room";
+            
+            const equalSplit = Math.floor(leftover / users);
+            slotsContainer.innerHTML = "<h3>Assign Context Memory</h3>";
+            slotBudgets = [];
+            
+            for(let i=0; i<users; i++) {
+                slotBudgets.push(equalSplit);
+                slotsContainer.innerHTML += `
+                    <div class="slot-slider">
+                        <label style="min-width: 60px;">Slot ${i+1}</label>
+                        <input type="range" id="slot-${i}" min="100" max="${leftover}" value="${equalSplit}" oninput="updateSlot(${i}, this.value)">
+                        <span id="slot-val-${i}" style="min-width: 80px; font-weight:bold;">${equalSplit} MB</span>
+                    </div>
+                `;
+            }
+        }
+
+        function updateSlot(index, val) {
+            slotBudgets[index] = parseInt(val);
+            document.getElementById(`slot-val-${index}`).innerText = `${val} MB`;
+        }
+
+        vramSel.addEventListener('change', updateMath);
+        modelSel.addEventListener('change', updateMath);
+        userSel.addEventListener('change', updateMath);
+        updateMath();
+
+        function launch() {
+            const url = `host.html?mode=${modelSel.value}&vram=${vramSel.value}&users=${userSel.value}&slots=${slotBudgets.join(',')}`;
+            window.location.href = url;
+        }
+    </script>
 </body>
 </html>

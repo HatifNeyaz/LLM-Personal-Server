@@ -4,32 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Host Dashboard</title>
-    <!-- Add PeerJS -->
-    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.1/peerjs.min.js"></script>
     <style>
-        body { font-family: system-ui, sans-serif; padding: 20px; background: #111; color: #fff; }
-        #status-box { padding: 15px; background: #222; border-radius: 8px; border-left: 4px solid #0070f3; margin-top: 20px; }
-        .log-line { margin: 5px 0; font-family: monospace; font-size: 14px; color: #aaa; }
-        #room-box { display: none; margin-top: 20px; padding: 15px; background: #004400; border-radius: 8px; border: 2px dashed #10b981; }
-        .room-code { font-size: 24px; font-weight: bold; color: #10b981; letter-spacing: 2px; }
+        body { font-family: system-ui, sans-serif; padding: 20px; background: #111; color: #fff; display: flex; gap: 20px;}
+        .panel { background: #222; padding: 20px; border-radius: 8px; flex: 1; }
+        .room-code { font-size: 32px; font-weight: bold; color: #10b981; letter-spacing: 4px; text-align: center;}
+        .slot-card { background: #333; padding: 15px; margin: 10px 0; border-radius: 6px; border-left: 4px solid #0070f3;}
+        select, button { padding: 10px; font-size: 16px; border-radius: 6px; }
+        .btn-start { background: #0070f3; color: white; border: none; width: 100%; cursor: pointer; font-weight: bold; margin-top: 15px;}
+        .engine-log { font-family: monospace; font-size: 12px; color: #aaa; background: #000; padding: 5px; height: 100px; overflow-y: auto;}
     </style>
 </head>
 <body>
-    <h1>Host Command Center</h1>
-    <p>Model: <span id="model-name">Loading...</span></p>
-    
-    <div id="status-box">
-        <h3>System Status</h3>
-        <p id="progress-text" style="font-weight: bold;">Checking system...</p>
-        <div id="debug-logs"></div>
+    <div class="panel">
+        <h1>Room Lobby</h1>
+        <div style="background: #004400; padding: 15px; border: 2px dashed #10b981; text-align: center; border-radius: 8px;">
+            <h3>Room Code</h3>
+            <div class="room-code" id="room-code-display">WAITING</div>
+        </div>
+        
+        <h3 style="margin-top: 20px;">Connected Clients: <span id="connected-count">0</span></h3>
+        <ul id="client-list"></ul>
     </div>
 
-    <!-- Shows up once the engine is loaded -->
-    <div id="room-box">
-        <h3>Network Ready</h3>
-        <p>Tell clients to connect using Room Code:</p>
-        <div class="room-code" id="room-code-display">WAITING...</div>
-        <p id="connected-count">Connected Users: 0</p>
+    <div class="panel">
+        <h1>Parallel Engine Assignment</h1>
+        <div id="slots-container"></div>
+        <button id="start-btn" class="btn-start">Boot Assigned Engines & Begin Session</button>
     </div>
 
     <script type="module" src="./js/host/app.js"></script>

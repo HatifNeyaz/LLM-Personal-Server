@@ -1,53 +1,42 @@
+// 👉 File: /js/host/engine.js
 import { CONFIG } from '../config.js';
 import { CreateWebWorkerMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
 
 export class HostEngine {
-    constructor(onProgress, onReady, onError, onLog) {
-        this.onProgress = onProgress;
-        this.onReady = onReady;
-        this.onError = onError;
+    constructor(onLog, maxTokens) {
         this.onLog = onLog;
+        this.maxTokens = maxTokens;
         this.engine = null;
     }
 
     async bootEngine() {
-        this.onLog("Initializing official WebWorkerMLCEngine...");
-        try {
-            const workerUrl = new URL('./worker.js', import.meta.url);
-            const worker = new Worker(workerUrl, { type: 'module' });
-            
-            worker.onerror = (error) => this.onError(`Worker Error: ${error.message}`);
-
-            this.engine = await CreateWebWorkerMLCEngine(
-                worker,
-                CONFIG.MODEL_ID,
-                { initProgressCallback: (p) => this.onProgress(p.text) }
-            );
-            
-            this.onReady();
-        } catch (err) {
-            this.onError(`Failed to create engine: ${err.message}`);
-        }
+        this.onLog(`Initializing WebGPU bounds: ${this.maxTokens} tokens.`);
+        const workerUrl = new URL('./worker.js', import.meta.url);
+        const worker = new Worker(workerUrl, { type: 'module' });
+        
+        this.engine = await CreateWebWorkerMLCEngine(
+            worker,
+            CONFIG.MODEL_ID,
+            { 
+                initProgressCallback: (p) => this.onLog(`[Loading] ${Math.round(p.progress * 100)}%`),
+                context_window_size: this.maxTokens,
+                prefill_chunk_size: 1024 
+            }
+        );
     }
 
-    // New Function: Handles the actual inference queue
     async generateResponse(messagesArray, onUpdate, onFinish) {
         try {
-            const chunks = await this.engine.chat.completions.create({
-                messages: messagesArray,
-                stream: true,
-            });
-            
+            const chunks = await this.engine.chat.completions.create({ messages: messagesArray, stream: true });
             let fullReply = "";
             for await (const chunk of chunks) {
-                const text = chunk.choices[0]?.delta?.content || "";
-                fullReply += text;
-                onUpdate(fullReply); // Stream tokens back to the caller
+                fullReply += chunk.choices[0]?.delta?.content || "";
+                onUpdate(fullReply);
             }
             onFinish(fullReply);
         } catch (error) {
-            console.error(error);
-            onFinish("[Error: Inference failed on host]");
+            onUpdate(`\n\n[Engine Error: ${error.message}]`);
+            onFinish("");
         }
     }
 }
